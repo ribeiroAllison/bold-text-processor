@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOCX Bold Text Processor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .upload-area:hover {
+            border-color: #666;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DOCX Bold Text Processor</h1>
+        <div class="upload-area">
+            <p>Upload your DOCX file</p>
+            <input type="file" id="fileInput" accept=".docx">
+        </div>
+        <button id="processButton" disabled>Process and Download</button>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const processButton = document.getElementById('processButton');
+        const status = document.getElementById('status');
+
+        function decodeHtmlEntities(text) {
+            return text
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&amp;/g, '&')
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'");
+        }
+
+        function processBoldText(content) {
+            let processedContent = content.replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>');
+            processedContent = processedContent.replace(/<b\s*>(.*?)<\/b>/g, '<b>$1</b>');
+            processedContent = decodeHtmlEntities(processedContent);
+            return processedContent;
+        }
+
+        fileInput.addEventListener('change', () => {
+            processButton.disabled = !fileInput.files.length;
+            status.textContent = '';
+            status.className = '';
+        });
+
+        processButton.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            try {
+                // Create FormData and append file
+                const formData = new FormData();
+                formData.append('file', file);
+
+                // Send file to server for processing
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Processing failed');
+
+                const result = await response.text();
+                const processedText = processBoldText(result);
+
+                // Create download
+                const blob = new Blob([processedText], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = file.name.replace('.docx', '_processed.txt');
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                status.textContent = 'File processed successfully!';
+                status.className = 'success';
+            } catch (error) {
+                status.textContent = 'Error processing file: ' + error.message;
+                status.className = 'error';
+            }
+        });
+    </script>
+</body>
+</html>
