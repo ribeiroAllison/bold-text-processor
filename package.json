@@ -8,10 +8,13 @@
   "name": "bold-editor",
   "version": "1.0.0",
   "main": "bold.js",
-  "devDependencies": {},
+  "devDependencies": {
+    "lite-server": "^2.6.1"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "lite-server --baseDir=\"public\""
   },
   "keywords": [],
   "author": "",
