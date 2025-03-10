@@ -1,0 +1,8 @@
+[build]
+  functions = "netlify/functions"
+  publish = "public"
+
+[[redirects]]
+  from = "/process"
+  to = "/.netlify/functions/processFile"
+  status = 200
